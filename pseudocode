@@ -1,0 +1,104 @@
+HACKATHON
+{
+	http://ieee.wsu.edu
+	nov 2 - 3
+	sloan 175 @ 10:00 am
+	2- extra credit
+}
+
+Program
+	game_running = true
+	do
+	{
+		Initialize Game
+			set player 1 board
+				Ask if want to play manually or randomly
+				if manually
+					1. get input for x and y coords of each ship
+					2. validate location
+					3. if valid place, else go back to 1
+
+			set player 2 board (player 2 is AI)
+				same as player 1 except random 
+
+			decide which player starts first
+			player_lost = false;
+
+		while (true) {
+			var input
+			while (true) {
+				generate player's board
+				Display Prompt (prompt = player's board)
+				{
+					Display prompt
+					display optional message
+					display >>
+				}
+				GET_PLAYER_OR_AI_INPUT(input)
+				if (input valid)
+				{
+					break;
+				}
+				else
+				{
+					set error message
+				}
+			}
+			modify game data based on user input
+			if player_lost
+			{
+				break
+			}
+			else 
+			{
+				if (player == HUMAN) player = AI;
+				else player = HUMAN;
+				
+				return to display prompt
+			}
+		}
+
+		Declare winner
+		if play again
+			return to initialize game
+	} while (game_running)
+
+	Display exit message
+
+	return 0
+
+enum PLAYERS =
+{
+	HUMAN,
+	AI
+}
+
+template <AI callback>
+GET_PLAYER_OR_AI_INPUT(char * input, size, enum PLAYERS player)
+{
+	if player == HUMAN
+	{
+		fgets(input, size);
+	}
+	else
+	{
+		<AI callback>(input) 
+	}
+}
+
+BOARD
+==== PLAYER X's TURN ====
+9 | - - - - - - - - - - -
+8 | - - - - - - - - - - -
+7 | - - - - - - - - - - -
+6 | - - - - - - - - - - -
+5 | - - - - - - - - - - -
+4 | - - - - - - - - - - -
+3 | - - - - - - - - - - -
+2 | - - - - - - - - - - -
+1 | - - - - - - - - - - -
+--+----------------------
+  | A B C D E F G H I J K
+
+ * 
+ prompt >> 
