@@ -2,36 +2,27 @@
 
 /// Date Created: 10/26/2019
 /// Date Modified: 10/26/2019
-/// Input params: none
-/// Output params: none
-/// Returns: boolean value
-/// Preconditions: start of program, functional input.
-/// Postconditions: none.
-/// Description: Prompts the player for whether they are going to set the board manually or automatically.
-bool ask_set_board_manually(void)
+/// Input params: 
+/// Output params: playerdata_t pointer
+/// Returns: none
+/// Preconditions: 
+/// Postconditions: 
+/// Description: prints the board
+void print_board(playerdata_t * playerdata)
 {
-	do
+	
+	for (int i = 0; i < 10; ++i)
 	{
-		char input[4] = { '\0' };
-		CLEAR_SCREEN;
-		printf("Do you wish to set your ships manually or automatically?\n >> ");
-		input_string_and_flush(input, 4);
-
-		for (int i = 0; input[i] != '\0' && i < 4; ++i)
+		// once per row
+		printf("%d |", 9-i);
+		for (int k = 0; k < 10; ++k)
 		{
-			input[i] = tolower(input[i]);
+			fputs(" ", stdout);
+			fputs((char*)&playerdata->gameboard[i][k], stdout);
 		}
-		printf("Input received: %s\n", input);
-		if (!strcmp(input, "yes"))
-		{
-			return true;
-		}
-		else if (!strcmp(input, "no"))
-		{
-			return false;
-		}
-
-	} while (true);
+		puts("");
+	}
+	puts("--+----------------------\n  | A B C D E F G H I J");
 }
 
 void set_board_manually(playerdata_t * playerdata)
@@ -52,10 +43,23 @@ errorcode_t damage_board(playerdata_t * victim, coordinate_t * coord)
 	return no_error;
 }
 
-void get_coordinate(coordinate_t * coord)
+bool get_coordinate(const char * err, coordinate_t * coord)
 {
-	UNIMPLEMENTED(get_coordinate);
-	UNUSED(coord);
+	char input[3] = { '\0' };
+	printf("Input a target coordinate.\n\n * %s \n\n >> ", err);
+	input_line(input, 3);
+	size_t x = 9 - ((size_t)(input[0]-'0'));
+	if ( x <= 9)
+	{
+		size_t y =(size_t)(input[1]-'A');
+		if (y <= 9)
+		{
+			coord->x = x;
+			coord->y = y;
+			return true;
+		}
+	}
+	return false;
 }
 
 void generate_coord(coordinate_t * coord)
@@ -78,44 +82,8 @@ void ai_check_opponent_coord(playerdata_t * opponent, coordinate_t * coord)
 /// Returns: random player_t enum
 /// Preconditions: 
 /// Postconditions: 
-/// Description: 
+/// Description: chooses random number between 0 and 1
 player_t choose_starting_player()
 {
 	return RANDOM_RANGE(human, ai);
-}
-
-/// Date Created: 
-/// Date Modified: 
-/// Input params: 
-/// Output params: 
-/// Returns: 
-/// Preconditions: 
-/// Postconditions: 
-/// Description: 
-bool ask_play_again(void)
-{
-	const char * error_message = "";
-	char input = '\0';
-	bool play_again = false;
-	while (true)
-	{
-		
-		CLEAR_SCREEN;
-		printf("Do you wish to play again (y/n)?\n\n* %s\n\n >> ", error_message);
-		input = getchar();
-		if (input == 'y') 
-		{
-			play_again = true;
-			break;
-		}
-		else if (input == 'n')
-		{
-			play_again = false;
-			break;
-		}
-
-		error_message = "Please input y or n.";
-	}
-	while ((input = getchar()) != '\n') ;
-	return play_again;
 }
