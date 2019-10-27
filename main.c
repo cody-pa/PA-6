@@ -1,10 +1,20 @@
 #include <stdio.h>
 #include "battleship.h"
 #include "../kp-lib/kp-lib.h"
+#include <time.h>
+
+//#define TEST
 
 int main (void)
 {
+	srand(time(0));
+#ifdef TEST
+	playerdata_t player;
+	coordinate_t coord;
+	
+#else
 	bool playing = true;
+	const char * message;
 	do
 	{
 		/////////////////////////////
@@ -61,8 +71,27 @@ int main (void)
 				opposition = human;
 
 			// get input if human move, automatic input if ai
-			if (current == human) get_coordinate(&selected_coord);
-				else generate_coord(&selected_coord);
+			if (current == human) 
+			{			
+				message = "";
+				while (true)
+				{
+					CLEAR_SCREEN;
+					printf("=== Player %d's turn ===\n", 1);
+					print_board(&player);
+					if (get_coordinate(message, &coord))
+						break;
+					message = "Invalid coordinate.";
+				}
+				CLEAR_SCREEN;
+				player.gameboard[coord.x][coord.y] = pegged;
+				print_board(&player);
+				PAUSE;
+			}
+			else
+			{
+				generate_coord(&selected_coord);
+			} 
 
 			damage_board(&players[opposition], &selected_coord);
 
@@ -86,18 +115,20 @@ int main (void)
 		switch(opposition)
 		{
 		case human:
-			exit_message = "You lost!";
+			message = "You lost!";
 			break;
 		case ai:
-			exit_message = "You won!";
+			message = "You won!";
 			break;
 		}
 		CLEAR_SCREEN;
-		puts(exit_message);
+		puts(message);
+		message = "";
 		PAUSE;
 		CLEAR_SCREEN;
 		playing = yn_prompt("Do you want to play again?");
 	} while(playing);
 	puts("Thanks for playing!");
+#endif
 	return 0;
 }
