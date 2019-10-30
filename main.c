@@ -41,6 +41,7 @@ int main (void)
 		{
 			set_board_automatically(&players[human]);
 		}
+		set_board_automatically(&players[ai]);
 
 		player_t current = choose_starting_player();
 		player_t opposition;
@@ -70,30 +71,40 @@ int main (void)
 			else
 				opposition = human;
 
-			// get input if human move, automatic input if ai
+			// Print boards and get input if it's human's turn
 			if (current == human) 
 			{			
+				#define SHOW_BOARDS printf("=== Player %d's turn ===\n\n", current+1);\
+					puts("Opponent:");\
+					print_board(players[opposition].gameboard);\
+					puts("\nYour board:");\
+					print_board(players[current].gameboard)
+
+				// Coordinate Input Loop
 				message = "";
 				while (true)
 				{
 					CLEAR_SCREEN;
-					printf("=== Player %d's turn ===\n", 1);
-					print_board(&player);
-					if (get_coordinate(message, &coord))
+					SHOW_BOARDS;
+					if (get_coordinate(message, &selected_coord))
 						break;
 					message = "Invalid coordinate.";
 				}
+				// Successfully got coordinate input, apply to board.
+				damage_board(players[opposition].gameboard, &selected_coord);
 				CLEAR_SCREEN;
-				player.gameboard[coord.x][coord.y] = pegged;
-				print_board(&player);
+				SHOW_BOARDS;
 				PAUSE;
+				#undef SHOW_BOARDS
 			}
 			else
+			// AI takes turn here.
 			{
 				generate_coord(&selected_coord);
+				damage_board(players[opposition].gameboard, &selected_coord);
 			} 
 
-			damage_board(&players[opposition], &selected_coord);
+			
 
 			if (!(players[opposition].surviving_ships))
 			{
@@ -111,7 +122,6 @@ int main (void)
 		/////////////////////////////
 		/// Post-game
 		/////////////////////////////
-		const char * exit_message;
 		switch(opposition)
 		{
 		case human:

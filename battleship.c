@@ -8,7 +8,7 @@
 /// Preconditions: 
 /// Postconditions: 
 /// Description: prints the board
-void print_board(playerdata_t * playerdata)
+void print_board(battleshipsquare_t board[10][10])
 {
 	
 	for (int i = 0; i < 10; ++i)
@@ -18,7 +18,7 @@ void print_board(playerdata_t * playerdata)
 		for (int k = 0; k < 10; ++k)
 		{
 			fputs(" ", stdout);
-			fputs((char*)&playerdata->gameboard[i][k], stdout);
+			fputs((char*)&board[i][k], stdout);
 		}
 		puts("");
 	}
@@ -35,8 +35,9 @@ void set_board_automatically(playerdata_t * playerdata)
 	UNIMPLEMENTED(set_board_automatically);
 	UNUSED(playerdata);
 }
-errorcode_t damage_board(playerdata_t * victim, coordinate_t * coord)
+errorcode_t damage_board(battleshipsquare_t victim[10][10], coordinate_t * coord)
 {
+
 	UNIMPLEMENTED(damage_board);
 	victim->surviving_ships = 0;
 	UNUSED(coord);

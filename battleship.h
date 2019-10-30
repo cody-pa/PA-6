@@ -54,11 +54,11 @@ typedef struct player_data
 // ==========================================================================
 void set_board_manually(playerdata_t * playerdata);
 void set_board_automatically(playerdata_t * playerdata);
-errorcode_t damage_board(playerdata_t * victim, coordinate_t * coord);
+errorcode_t damage_board(battleshipsquare_t victim[10][10], coordinate_t * coord);
 bool get_coordinate(const char * err, coordinate_t * coord);
 void generate_coord(coordinate_t * coord);
 void ai_check_opponent_coord(playerdata_t * opponent, coordinate_t * coord);
 player_t choose_starting_player();
-void print_board(playerdata_t * playerdata);
+void print_board(battleshipsquare_t board[10][10]);
 
 #endif // BATTLESHIP_H
