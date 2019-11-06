@@ -35,6 +35,8 @@ typedef enum _player {
 typedef enum _battleship_square
 {
 	empty = '-',
+	hit = '*',
+	miss = 'm',
 	#define X_LIST(SHIP, CHAR, NUM) SHIP = CHAR,
 	#define X_END(SHIP, CHAR, NUM) SHIP = CHAR
 	SHIPS
@@ -71,10 +73,10 @@ typedef struct player_data
 // FUNCTIONS
 // ==========================================================================
 void set_board_manually(playerdata_t * playerdata);
-void set_board_automatically(playerdata_t * playerdata);
+void set_board_automatically(battleshipsquare_t board[10][10]);
 errorcode_t damage_board(playerdata_t * victim, coordinate_t * coord);
 bool get_coordinate(const char * err, coordinate_t * coord, short unsigned int count);
-void generate_coord(coordinate_t * coord);
+void generate_coord(coordinate_t * coord, unsigned char max_row, unsigned char max_col);
 void ai_check_opponent_coord(playerdata_t * opponent, coordinate_t * coord);
 player_t choose_starting_player();
 void print_board(battleshipsquare_t board[10][10], bool show_ships);
