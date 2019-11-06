@@ -2,6 +2,7 @@
 #include "battleship.h"
 #include "../kp-lib/kp-lib.h"
 #include <time.h>
+#include <signal.h>
 
 //#define TEST
 
@@ -10,8 +11,11 @@ int main (void)
 	srand(time(0));
 #ifdef TEST
 	playerdata_t player;
-	coordinate_t coord;
-	
+	UNUSED(player);
+	coordinate_t selected_coord;
+
+
+
 #else
 	bool playing = true;
 	const char * message;
@@ -50,11 +54,13 @@ int main (void)
 		if (current == human)
 		{
 			puts("Starting with human...");
+			battleship_log(NORMAL_PRINT, "Starting with human.");
 			PAUSE;
 		}
 		else
 		{
 			puts("Starting with ai...");
+			battleship_log(NORMAL_PRINT, "Starting with ai.");
 			PAUSE;
 		}
 		/////////////////////////////
@@ -76,9 +82,9 @@ int main (void)
 			{			
 				#define SHOW_BOARDS printf("=== Player %d's turn ===\n\n", current+1);\
 					puts("Opponent:");\
-					print_board(players[opposition].gameboard);\
+					print_board(players[opposition].gameboard, false);\
 					puts("\nYour board:");\
-					print_board(players[current].gameboard)
+					print_board(players[current].gameboard, true)
 
 				// Coordinate Input Loop
 				message = "";
@@ -86,12 +92,12 @@ int main (void)
 				{
 					CLEAR_SCREEN;
 					SHOW_BOARDS;
-					if (get_coordinate(message, &selected_coord))
+					if (get_coordinate(message, &selected_coord, 1))
 						break;
 					message = "Invalid coordinate.";
 				}
 				// Successfully got coordinate input, apply to board.
-				damage_board(players[opposition].gameboard, &selected_coord);
+				damage_board(&players[opposition], &selected_coord);
 				CLEAR_SCREEN;
 				SHOW_BOARDS;
 				PAUSE;
@@ -101,7 +107,7 @@ int main (void)
 			// AI takes turn here.
 			{
 				generate_coord(&selected_coord);
-				damage_board(players[opposition].gameboard, &selected_coord);
+				damage_board(&players[opposition], &selected_coord);
 			} 
 
 			
@@ -140,5 +146,9 @@ int main (void)
 	} while(playing);
 	puts("Thanks for playing!");
 #endif
+
+	// close the log files.
+	battleship_log(NORMAL_PRINT, NULL);
+	battleship_log(DEBUG_PRINT, NULL);
 	return 0;
 }
