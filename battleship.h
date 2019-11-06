@@ -4,13 +4,24 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdio.h>
+#include <time.h>
+#include <stdarg.h>
+
+#define DEBUG
 
 // ==========================================================================
 // MACROS
 // ==========================================================================
 #define ERROR_CODES\
-	X(no_error, ""),\
-	X(already_shot, "Don't shoot in the same place twice.")
+	X_LIST(no_error, "")\
+	X_END(already_shot, "Don't shoot in the same place twice.")
+
+#define SHIPS\
+	X_LIST(carrier, 'C', 5)\
+	X_LIST(battleship, 'b', 4)\
+	X_LIST(cruiser, 'c', 3)\
+	X_LIST(submarine, 's', 3)\
+	X_END(destroyer, 'd', 2)
 
 // ==========================================================================
 // TYPES
@@ -20,27 +31,34 @@ typedef enum _player {
 	ai
 } player_t;
 
+
 typedef enum _battleship_square
 {
 	empty = '-',
-	pegged = 'X',
-	carrier = 'c', //5
-	battleship = 'b', //4
-	destroyer = 'd', //3
-	submarine = 's', //3
-	patrol_boat = 'p' //2
+	#define X_LIST(SHIP, CHAR, NUM) SHIP = CHAR,
+	#define X_END(SHIP, CHAR, NUM) SHIP = CHAR
+	SHIPS
+	#undef X_LIST
+	#undef X_END
 } battleshipsquare_t;
 
 typedef enum _error_code
 {
-	#define X(ERR_CODE, ERR_MESSAGE) ERR_CODE
+	#define X_LIST(ERR_CODE, ERR_MESSAGE) ERR_CODE,
+	#define X_END(ERR_CODE, ERR_MESSAGE) ERR_CODE
 	ERROR_CODES
-	#undef X
+	#undef X_LIST
+	#undef X_END
 } errorcode_t;
 
+typedef enum {
+	DEBUG_PRINT,
+	NORMAL_PRINT
+} debug_mode_t;
+
 typedef struct coordinate {
-	unsigned char x;
-	unsigned char y;
+	unsigned char row;
+	unsigned char col;
 } coordinate_t;
 
 typedef struct player_data
@@ -54,11 +72,13 @@ typedef struct player_data
 // ==========================================================================
 void set_board_manually(playerdata_t * playerdata);
 void set_board_automatically(playerdata_t * playerdata);
-errorcode_t damage_board(battleshipsquare_t victim[10][10], coordinate_t * coord);
-bool get_coordinate(const char * err, coordinate_t * coord);
+errorcode_t damage_board(playerdata_t * victim, coordinate_t * coord);
+bool get_coordinate(const char * err, coordinate_t * coord, short unsigned int count);
 void generate_coord(coordinate_t * coord);
 void ai_check_opponent_coord(playerdata_t * opponent, coordinate_t * coord);
 player_t choose_starting_player();
-void print_board(battleshipsquare_t board[10][10]);
+void print_board(battleshipsquare_t board[10][10], bool show_ships);
+bool battleship_log(debug_mode_t mode, const char * fmt, ...);
+bool place_ship_on_board(battleshipsquare_t gameboard[10][10], coordinate_t coords[], battleshipsquare_t symbol, unsigned char size);
 
 #endif // BATTLESHIP_H
