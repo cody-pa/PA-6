@@ -16,7 +16,7 @@ const battleship_struct battleship_types[5] = {
 
 
 /// Date Created: 10/26/2019
-/// Date Modified: 10/26/2019
+/// Date Modified: 11/06/2019
 /// Input params: 
 /// Output params: playerdata_t pointer
 /// Returns: none
@@ -33,7 +33,24 @@ void print_board(battleshipsquare_t board[10][10], bool show_ships)
 		for (int k = 0; k < 10; ++k)
 		{
 			fputs(" ", stdout);
-			fputs((char*)&board[i][k], stdout);
+			char c[2] = {
+				board[i][k],
+				'\0'
+			};
+			
+			if (!show_ships)
+			{
+				switch(*c)
+				{
+				default:
+					c[0] = empty;
+				case hit:
+				case miss:
+					break;
+				}
+			}
+			fputs(c, stdout);
+			
 		}
 		puts("");
 	}
@@ -90,10 +107,69 @@ void set_board_manually(playerdata_t * playerdata)
 	PAUSE;
 	battleship_log(DEBUG_PRINT, "Call to set_board_manually complete.");
 }
-void set_board_automatically(playerdata_t * playerdata)
+
+/// Date Created: 10/26/2019
+/// Date Modified: 11/06/2019
+/// Input params: 
+/// Output params: battleshipsquare 2D array
+/// Returns:
+/// Preconditions: 
+/// Postconditions: 
+/// Description: generate ships for board
+void set_board_automatically(battleshipsquare_t board[10][10])
 {
-	UNIMPLEMENTED(set_board_automatically);
-	UNUSED(playerdata);
+	coordinate_t ship_coords[5];
+	// iterate through each time of ship
+	for (int current_ship = 0; current_ship < 5; ++current_ship)
+	{
+		bool placed_successfully;
+
+		battleship_log(DEBUG_PRINT, "Generating %s.", battleship_types[current_ship].name);
+		// for each ship, keep trying until success
+		do {
+			bool horizontal = RANDOM_RANGE(0, 1);
+			placed_successfully = true;
+			if (horizontal)
+			{
+				// generate first coord and then the rest
+				generate_coord(&ship_coords[0], 9, 10-battleship_types[current_ship].size);
+				for (int ship_segment = 1; ship_segment < 5; ++ship_segment)
+				{
+					ship_coords[ship_segment].row = ship_coords[0].row;
+					ship_coords[ship_segment].col = ship_coords[0].col + ship_segment;
+					if (board[ship_coords[ship_segment].row][ship_coords[ship_segment].col] != empty)
+					{
+						battleship_log(DEBUG_PRINT, "collission occurred.");
+						placed_successfully = false;
+						break;
+					}
+				}
+			}
+			else
+			{
+				generate_coord(&ship_coords[0], 10-battleship_types[current_ship].size, 9);
+				for (int ship_segment = 1; ship_segment < 5; ++ship_segment)
+				{
+					ship_coords[ship_segment].row = ship_coords[0].row+ship_segment;
+					ship_coords[ship_segment].col = ship_coords[0].col;
+					if (board[ship_coords[ship_segment].row][ship_coords[ship_segment].col] != empty)
+					{
+						battleship_log(DEBUG_PRINT, "collission occurred.");
+						placed_successfully = false;
+						break;
+					}
+				}
+			}
+			// after all coords generated, if no collision has happened then write them to the board.
+			if (placed_successfully)
+			{
+				for (int k = 0; k < battleship_types[current_ship].size; ++k)
+				{
+					board[ship_coords[k].row][ship_coords[k].col] = battleship_types[current_ship].symbol;
+				}
+			}
+		} while (!placed_successfully);
+	}
 }
 errorcode_t damage_board(playerdata_t * victim, coordinate_t * coord)
 {
@@ -192,10 +268,27 @@ bool get_coordinate(const char * err, coordinate_t coord[], short unsigned int c
 	return true;
 }
 
-void generate_coord(coordinate_t * coord)
+/// Date Created: 10/26/2019
+/// Date Modified: 11/06/2019
+/// Input params: max_row, max_col
+/// Output params: coord
+/// Returns:
+/// Preconditions: 
+/// Postconditions: 
+/// Description: generates a random coordinate according to the specified bounds
+void generate_coord(coordinate_t * coord, unsigned char max_row, unsigned char max_col)
 {
-	UNIMPLEMENTED(generate_coord);
-	UNUSED(coord);
+	if (max_row > 9 || max_col > 10)
+	{
+		battleship_log(DEBUG_PRINT, "Invalid max was passed to generate_coord!");
+		coord->row = 9;
+		coord->col = 9;
+		return;
+	}
+
+	coord->row = RANDOM_RANGE(0, max_row);
+	coord->col = RANDOM_RANGE(0, max_col);
+	battleship_log(DEBUG_PRINT, "generate_coord generated %d, %d.", coord->row, coord->col);
 }
 
 void ai_check_opponent_coord(playerdata_t * opponent, coordinate_t * coord)
