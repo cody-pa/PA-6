@@ -246,20 +246,30 @@ bool battleship_log (debug_mode_t mode, const char * fmt, ...)
 	{
 		if (*ofile == NULL)
 		{
-			if (mode == DEBUG_PRINT) *ofile = fopen("debug.txt", "a");
-			else *ofile = fopen("log.txt", "a");
+			char buffer[50] = { '\0' };
+
+			time(&current_time);
+			time(&current_time);
+			struct tm* now = localtime(&current_time);
+			sprintf(buffer, "%s-%04d-%02d-%02d-%02d-%02d-%02d.log", 
+					(mode == DEBUG_PRINT) ? "debug-logs/debug" : "games/game-log",
+					now->tm_year + 1900, now->tm_mon, now->tm_mday, now->tm_hour, 
+					now->tm_min, now->tm_sec);
+
+			*ofile = fopen(buffer, "w");
 		}
 
 		if (*ofile != NULL)
 		{
-			time(&current_time);
-			struct tm* now = localtime(&current_time);
-			int hour = (now->tm_isdst > 0) ? now->tm_hour + 1 : now->tm_hour;
-			if (hour >= 24) hour -= 24;
-			fprintf(*ofile, "[%02d/%02d/%d %02d:%02d:%02d %s]: ", 
-				now->tm_mday, now->tm_mon, now->tm_year + 1900, 
-				(hour < 12) ? hour : hour - 12, 
-				now->tm_min, now->tm_sec, (now->tm_hour < 12) ? "AM" : "PM");
+			if (mode == DEBUG_PRINT)
+			{
+				time(&current_time);
+				struct tm* now = localtime(&current_time);
+				fprintf(*ofile, "[%04d/%02d/%02d %02d:%02d:%02d]: ", 
+					now->tm_year + 1900, now->tm_mon+1, now->tm_mday, 
+					now->tm_hour, 
+					now->tm_min, now->tm_sec);
+			}
 			va_list argptr;
 			va_start(argptr, fmt);
 			vfprintf(*ofile, fmt, argptr);
@@ -270,7 +280,7 @@ bool battleship_log (debug_mode_t mode, const char * fmt, ...)
 		}
 		else 
 		{
-			if (mode != DEBUG_PRINT) battleship_log(DEBUG_PRINT, "Failed to open log.txt.");
+			fprintf(stderr, "Failed to open log.");
 			return false;
 		}
 	}
@@ -278,6 +288,7 @@ bool battleship_log (debug_mode_t mode, const char * fmt, ...)
 	{
 		if (*ofile != NULL && fclose(*ofile) == EOF)
 		{
+			fprintf(stderr, "Failed to close file.");
 			return false;
 		}
 	}
