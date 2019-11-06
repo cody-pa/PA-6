@@ -10,10 +10,7 @@ int main (void)
 {
 	srand(time(0));
 #ifdef TEST
-	playerdata_t player;
-	UNUSED(player);
-	coordinate_t selected_coord;
-
+	
 
 
 #else
