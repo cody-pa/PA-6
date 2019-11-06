@@ -11,7 +11,23 @@ int main (void)
 	srand(time(0));
 #ifdef TEST
 	
+	CLEAR_SCREEN;
+	playerdata_t playerdat;
+	for (int z = 0; z < 5; ++z)
+	{
+		for (int i = 0; i < 10; ++i)
+		{
+			for (int k = 0; k < 10; ++k)
+			{
+				playerdat.gameboard[i][k] = empty;
+			}
+		}
+		
+		set_board_automatically(playerdat.gameboard);
 
+		print_board(playerdat.gameboard, true);
+	}
+	PAUSE;
 
 #else
 	bool playing = true;
@@ -40,9 +56,9 @@ int main (void)
 		}
 		else
 		{
-			set_board_automatically(&players[human]);
+			set_board_automatically(players[human].gameboard);
 		}
-		set_board_automatically(&players[ai]);
+		set_board_automatically(players[ai].gameboard);
 
 		player_t current = choose_starting_player();
 		player_t opposition;
@@ -103,7 +119,7 @@ int main (void)
 			else
 			// AI takes turn here.
 			{
-				generate_coord(&selected_coord);
+				generate_coord(&selected_coord, 9, 9);
 				damage_board(&players[opposition], &selected_coord);
 			} 
 
