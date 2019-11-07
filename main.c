@@ -2,7 +2,6 @@
 #include "battleship.h"
 #include "../kp-lib/kp-lib.h"
 #include <time.h>
-#include <signal.h>
 
 //#define TEST
 
@@ -81,8 +80,7 @@ int main (void)
 		/////////////////////////////
 		do
 		{
-			// loop vars
-			coordinate_t selected_coord;
+			
 
 			/// Set context for game commands
 			if (current == human)
@@ -93,6 +91,8 @@ int main (void)
 			// Print boards and get input if it's human's turn
 			if (current == human) 
 			{			
+				// loop vars
+				coordinate_t selected_coord;
 				#define SHOW_BOARDS printf("=== Player %d's turn ===\n\n", current+1);\
 					puts("Opponent:");\
 					print_board(players[opposition].gameboard, false);\
@@ -106,12 +106,19 @@ int main (void)
 					CLEAR_SCREEN;
 					SHOW_BOARDS;
 					if (get_coordinate(message, &selected_coord, 1))
-						break;
-					message = "Invalid coordinate.";
+					{
+						// Successfully got coordinate input, apply to board.
+						if (damage_board(&players[opposition], &selected_coord)) break;
+						else message = "You already shot there.";
+					} 
+					else
+					{
+						message = "Invalid coordinate.";
+					}
 				}
-				// Successfully got coordinate input, apply to board.
-				damage_board(&players[opposition], &selected_coord);
+				
 				CLEAR_SCREEN;
+				puts("");
 				SHOW_BOARDS;
 				PAUSE;
 				#undef SHOW_BOARDS
@@ -119,10 +126,18 @@ int main (void)
 			else
 			// AI takes turn here.
 			{
-				generate_coord(&selected_coord, 9, 9);
-				damage_board(&players[opposition], &selected_coord);
-			} 
+				CLEAR_SCREEN;
+				puts("AI is taking turn...");
 
+				battleship_log(DEBUG_PRINT, "Taking AI turn.");
+				ai_take_turn(&players[ai], &players[human]);
+				
+				puts("Result (your board):");
+				print_board(players[human].gameboard, true);
+				puts("");
+
+				PAUSE;
+			} 
 			
 
 			if (!(players[opposition].surviving_ships))
