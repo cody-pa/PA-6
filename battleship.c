@@ -171,13 +171,33 @@ void set_board_automatically(battleshipsquare_t board[10][10])
 		} while (!placed_successfully);
 	}
 }
-errorcode_t damage_board(playerdata_t * victim, coordinate_t * coord)
-{
 
-	UNIMPLEMENTED(damage_board);
-	victim->surviving_ships = 0;
-	UNUSED(coord);
-	return no_error;
+/// Date Created: 10/26/2019
+/// Date Modified: 11/06/2019
+/// Input params: 
+/// Output params: playerdata pointer, coordinate pointer
+/// Returns: true  if operation was successful
+/// Preconditions: 
+/// Postconditions: 
+/// Description: tries to modify board according to input
+bool damage_board(playerdata_t * victim, coordinate_t * coord)
+{
+	#define VAL_AT_SPOT victim->gameboard[coord->row][coord->col]
+	switch(VAL_AT_SPOT)
+	{
+	case empty:
+		VAL_AT_SPOT = miss;
+		break;
+	case hit:
+	case miss:
+		return false;
+	default:
+		VAL_AT_SPOT = hit;
+		--(victim->surviving_ships);
+	}
+
+	#undef VAL_AT_SPOT
+	return true;
 }
 
 /// Date Created: 10/26/2019
@@ -291,11 +311,49 @@ void generate_coord(coordinate_t * coord, unsigned char max_row, unsigned char m
 	battleship_log(DEBUG_PRINT, "generate_coord generated %d, %d.", coord->row, coord->col);
 }
 
-void ai_check_opponent_coord(playerdata_t * opponent, coordinate_t * coord)
+/// Date Created: 10/26/2019
+/// Date Modified: 11/06/2019
+/// Input params: none
+/// Output params: none
+/// Returns: random player_t enum
+/// Preconditions: 
+/// Postconditions: 
+/// Description: chooses random number between 0 and 1
+void ai_take_turn(playerdata_t * restrict self, playerdata_t * restrict opponent)
 {
-	UNIMPLEMENTED(ai_check_opponent_coord);
-	UNUSED(opponent);
-	UNUSED(coord);
+	// TODO: finish this
+	coordinate_t selected_coord = { 0, 0};
+	static coordinate last_hit = { .row = 10, .col = 10 };
+	static bool left_exhausted = false;
+	static bool right_exhaused = false;
+	static bool top_exhausted = false;
+	static bool bottom_exhausted = false;
+
+	bool damage_result = true;
+	// 
+	if (last_hit.row == 10)
+	{
+		do
+		{
+			generate_coord(&selected_coord, 9, 9);
+		} while (opponent->gameboard[selected_coord.row][selected_coord.col] != hit && opponent->gameboard[selected_coord.row][selected_coord.col] != miss);
+
+	}
+	else
+	{
+
+	}
+	damage_result = damage_board(opponent, &selected_coord) )
+
+	if (!damage_result)
+	{
+		battleship_log(DEBUG_PRINT, "CRITICAL ERROR: AI chose bad coordinate!");
+		exit(1);
+	}
+	else if (opponent->gameboard[selected_coord.row][selected_coord.col] == hit)
+	{
+		last_hit = selected_coord;
+	}
 }
 
 /// Date Created: 10/26/2019
