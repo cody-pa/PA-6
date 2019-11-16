@@ -1,5 +1,5 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include "battleship.h"
-
 typedef struct {
 	const char * name;
 	unsigned char size;
@@ -14,6 +14,13 @@ const battleship_struct battleship_types[5] = {
 	#undef X_END
 };
 
+char* debug_output = "";
+char* get_debug_output()
+{
+	return debug_output;
+}
+char d_buf[10] = { '\0' };
+char d_str[] = "Pos: X";
 
 /// Date Created: 10/26/2019
 /// Date Modified: 11/06/2019
@@ -133,6 +140,12 @@ void set_board_automatically(battleshipsquare_t board[10][10])
 			{
 				// generate first coord and then the rest
 				generate_coord(&ship_coords[0], 9, 10-battleship_types[current_ship].size);
+				if (board[ship_coords[0].row][ship_coords[0].col] != empty)
+				{
+					battleship_log(DEBUG_PRINT, "collission occurred.");
+					placed_successfully = false;
+					break;
+				}
 				for (int ship_segment = 1; ship_segment < 5; ++ship_segment)
 				{
 					ship_coords[ship_segment].row = ship_coords[0].row;
@@ -148,6 +161,12 @@ void set_board_automatically(battleshipsquare_t board[10][10])
 			else
 			{
 				generate_coord(&ship_coords[0], 10-battleship_types[current_ship].size, 9);
+				if (board[ship_coords[0].row][ship_coords[0].col] != empty)
+				{
+					battleship_log(DEBUG_PRINT, "collission occurred.");
+					placed_successfully = false;
+					break;
+				}
 				for (int ship_segment = 1; ship_segment < 5; ++ship_segment)
 				{
 					ship_coords[ship_segment].row = ship_coords[0].row+ship_segment;
@@ -183,6 +202,7 @@ void set_board_automatically(battleshipsquare_t board[10][10])
 bool damage_board(playerdata_t * victim, coordinate_t * coord)
 {
 	#define VAL_AT_SPOT victim->gameboard[coord->row][coord->col]
+	battleshipsquare_t attacked_square = VAL_AT_SPOT;
 	switch(VAL_AT_SPOT)
 	{
 	case empty:
@@ -196,6 +216,36 @@ bool damage_board(playerdata_t * victim, coordinate_t * coord)
 		--(victim->surviving_ships);
 	}
 
+	battleship_log(NORMAL_PRINT, "Player attacked row %d, column %d. %s!", coord->row, coord->col, (VAL_AT_SPOT == miss) ? "It was a miss" : "It was a hit");
+	bool sunk = true;
+	if (VAL_AT_SPOT == hit)
+	{
+		for (int i = 0; i < 10 && sunk; ++i)
+		{
+			for (int k = 0; k < 10 && sunk; ++k)
+			{
+				if (victim->gameboard[i][k] == attacked_square)
+				{
+					sunk = false;
+				}
+			}
+		}
+	}
+	else
+		sunk = false;
+	if (sunk)
+	{
+		const char* n = "ship";
+		for (int i = 0; i < 5; ++i)
+		{
+			if (battleship_types[i].symbol == attacked_square)
+			{
+				n = battleship_types[i].name;
+				break;
+			}
+		}
+		battleship_log(NORMAL_PRINT, "A %s was sunk!", n);
+	}
 	#undef VAL_AT_SPOT
 	return true;
 }
@@ -319,41 +369,181 @@ void generate_coord(coordinate_t * coord, unsigned char max_row, unsigned char m
 /// Preconditions: 
 /// Postconditions: 
 /// Description: chooses random number between 0 and 1
-void ai_take_turn(playerdata_t * restrict self, playerdata_t * restrict opponent)
+void ai_take_turn(playerdata_t* restrict self, playerdata_t* restrict opponent)
 {
+#ifdef FINISHED
 	// TODO: finish this
-	coordinate_t selected_coord = { 0, 0};
-	static coordinate last_hit = { .row = 10, .col = 10 };
-	static bool left_exhausted = false;
-	static bool right_exhaused = false;
-	static bool top_exhausted = false;
-	static bool bottom_exhausted = false;
+	struct check_stack {
+		unsigned char row;
+		unsigned char col;
+		bool checked_left;
+		bool checked_top;
+		bool checked_right;
+		bool checked_bottom;
+	};
+	static struct check_stack coord_line[100] = {
+		{ 0, 0, true, true, true, true }, { 0, 0, false, false, false, false },
+		{ 0, 0, false, false, false, false }, { 0, 0, false, false, false, false },
+		{ 0, 0, false, false, false, false },
+	};
+	static unsigned char stack_pos = 0;
+	enum direction {
+		UNSET,
+		VERTICAL,
+		HORIZONTAL
+	};
+	enum direction current_direction = UNSET;
 
-	bool damage_result = true;
-	// 
-	if (last_hit.row == 10)
+#define CHECK_VERIFY(I)\
+	if (coord_line[I].row == 0)\
+		coord_line[I].checked_top = true;\
+	else if (coord_line[I].row == 9)\
+		coord_line[I].checked_bottom = true;\
+	if (coord_line[I].col == 0)\
+		coord_line[I].checked_left = true;\
+	else if (coord_line[I].col == 9)\
+		coord_line[I].checked_right = true;
+
+	bool took_shot = false;
+	do 
 	{
-		do
+		if (stack_pos == 0)
 		{
-			generate_coord(&selected_coord, 9, 9);
-		} while (opponent->gameboard[selected_coord.row][selected_coord.col] != hit && opponent->gameboard[selected_coord.row][selected_coord.col] != miss);
+			printf("stack_pos is zero\n");
+			// If all sides of the first slot have already been dealt with, reinit
+			if (coord_line[0].checked_bottom
+				&& coord_line[0].checked_left
+				&& coord_line[0].checked_right
+				&& coord_line[0].checked_top)
+			{
+				debug_output = "starting from scratch";
+				current_direction = UNSET;
+				coord_line[0].checked_bottom = false;
+				coord_line[0].checked_left = false;
+				coord_line[0].checked_right = false;
+				coord_line[0].checked_top = false;
+				generate_coord((coordinate_t*)coord_line, 9, 9);
+				took_shot = damage_board(opponent, (coordinate_t*)coord_line);
+				if (took_shot)
+				{
+					++stack_pos;
+					CHECK_VERIFY(0);
+					coord_line[stack_pos].checked_bottom = false;
+					coord_line[stack_pos].checked_left = false;
+					coord_line[stack_pos].checked_right = false;
+					coord_line[stack_pos].checked_top = false;
+				}
+			}
+			else
+			{
+				++stack_pos;
+				debug_output = "Made it back to start but not restarting.";
+			}
+		}
+		else
+		{
+			sprintf(d_buf, "%d", stack_pos);
+			d_str[5] = d_buf[0];
+			debug_output = d_str;
 
-	}
-	else
-	{
+			bool checked_all = false;
+			char col_offset = 0;
+			char row_offset = 0;
+			// set checked true on every attempted shot whether it lands or not
+			// this will loop until a shot is actually taken
+			if (!coord_line[stack_pos - 1].checked_left && current_direction != VERTICAL)
+			{
+				col_offset = -1; coord_line[stack_pos - 1].checked_left = true;
+			}
+			else if (!coord_line[stack_pos - 1].checked_top && current_direction != HORIZONTAL)
+			{
+				row_offset = -1;
+				coord_line[stack_pos - 1].checked_top = true;
+			}
+			else if (!coord_line[stack_pos - 1].checked_right && current_direction != VERTICAL)
+			{
+				col_offset = 1;
+				coord_line[stack_pos - 1].checked_right = true;
+			}
+			else if (!coord_line[stack_pos - 1].checked_bottom && current_direction != HORIZONTAL)
+			{
+				row_offset = 1;
+				coord_line[stack_pos - 1].checked_bottom = true;
+			}
+			printf("col offset: %d, row_offset: %d\n", col_offset, row_offset);
+			if (!col_offset && !row_offset)
+			{
+				printf("evaluated all spaces. %d\n", stack_pos);
+				// we've run out of spaces
+				--stack_pos;
+				printf("evaluated all spaces. %d\n", stack_pos);
+			}
+			else
+			{
+				coord_line[stack_pos].row = coord_line[stack_pos - 1].row + row_offset;
+				coord_line[stack_pos].col = coord_line[stack_pos - 1].col + col_offset;
+				took_shot = damage_board(opponent, (coordinate_t*)&coord_line[stack_pos]);
+				if (took_shot && opponent->gameboard[coord_line[stack_pos].row][coord_line[stack_pos].col] != miss)
+				{ // we hit a ship with this move
+					if (current_direction == UNSET)
+					{
+						if (col_offset)
+						{
+							current_direction = HORIZONTAL;
+						}
+						else if (row_offset)
+						{
+							current_direction = VERTICAL;
+						}
+					}
 
-	}
-	damage_result = damage_board(opponent, &selected_coord) )
-
-	if (!damage_result)
+					if (stack_pos < 100)
+					{
+						CHECK_VERIFY(stack_pos);
+						if (coord_line[stack_pos - 1].col < coord_line[stack_pos].col)
+						{
+							coord_line[stack_pos].checked_left = true;
+						}
+						else if (coord_line[stack_pos - 1].col > coord_line[stack_pos].col)
+						{
+							coord_line[stack_pos].checked_right = true;
+						}
+						else if (coord_line[stack_pos - 1].row < coord_line[stack_pos].row)
+						{
+							coord_line[stack_pos].checked_top = true;
+						}
+						else if (coord_line[stack_pos - 1].row > coord_line[stack_pos].row)
+						{
+							coord_line[stack_pos].checked_bottom = true;
+						}
+						++stack_pos;
+						// be sure to refresh every time we move up
+						coord_line[stack_pos].checked_bottom = false;
+						coord_line[stack_pos].checked_left = false;
+						coord_line[stack_pos].checked_right = false;
+						coord_line[stack_pos].checked_top = false;
+					}
+					else
+					{ // we've run out of spaces
+						stack_pos = 0;
+						coord_line[0].checked_bottom = true;
+						coord_line[0].checked_left = true;
+						coord_line[0].checked_right = true;
+						coord_line[0].checked_top = true;
+					}
+				}
+			}
+		}
+	} while (!took_shot);
+#else
+// couldn't finish the AI in time u_u
+// mega_dumb AI fallback
+	coordinate_t selected_coord = { 0, 0 };
+	do
 	{
-		battleship_log(DEBUG_PRINT, "CRITICAL ERROR: AI chose bad coordinate!");
-		exit(1);
-	}
-	else if (opponent->gameboard[selected_coord.row][selected_coord.col] == hit)
-	{
-		last_hit = selected_coord;
-	}
+		generate_coord(&selected_coord, 9, 9);
+	} while (!damage_board(opponent, &selected_coord));
+#endif
 }
 
 /// Date Created: 10/26/2019
@@ -403,7 +593,7 @@ bool battleship_log (debug_mode_t mode, const char * fmt, ...)
 			time(&current_time);
 			struct tm* now = localtime(&current_time);
 			sprintf(buffer, "%s-%04d-%02d-%02d-%02d-%02d-%02d.log", 
-					(mode == DEBUG_PRINT) ? "debug-logs/debug" : "games/game-log",
+					(mode == DEBUG_PRINT) ? "debug-logs/debug" : "games/battleship",
 					now->tm_year + 1900, now->tm_mon, now->tm_mday, now->tm_hour, 
 					now->tm_min, now->tm_sec);
 

@@ -66,12 +66,13 @@ typedef struct player_data
 void set_board_manually(playerdata_t * playerdata);
 void set_board_automatically(battleshipsquare_t board[10][10]);
 bool damage_board(playerdata_t * victim, coordinate_t * coord);
-bool get_coordinate(const char * err, coordinate_t * coord, short unsigned int count);
+bool get_coordinate(const char * err, coordinate_t coord[], short unsigned int count);
 void generate_coord(coordinate_t * coord, unsigned char max_row, unsigned char max_col);
-void ai_take_turn(playerdata_t * self, playerdata_t * opponent);
+void ai_take_turn(playerdata_t * restrict self, playerdata_t * restrict opponent);
 player_t choose_starting_player();
 void print_board(battleshipsquare_t board[10][10], bool show_ships);
 bool battleship_log(debug_mode_t mode, const char * fmt, ...);
 bool place_ship_on_board(battleshipsquare_t gameboard[10][10], coordinate_t coords[], battleshipsquare_t symbol, unsigned char size);
 
+char* get_debug_output();
 #endif // BATTLESHIP_H

@@ -1,38 +1,54 @@
+/*
+* Programmer: Cody Paschich
+* Class: CptS 121, Lab Section 17L
+* Programming Assignment: PA 6
+* Date: 11/6/2019
+* Description: Game of battleship
+	(note: the battleship logs are in the games folder in the project directory.)
+*/
+
 #include <stdio.h>
 #include "battleship.h"
 #include "../kp-lib/kp-lib.h"
 #include <time.h>
+#include <windows.h>
 
 //#define TEST
 
 int main (void)
 {
-	srand(time(0));
+	srand((unsigned int)time(0));
 #ifdef TEST
 	
 	CLEAR_SCREEN;
 	playerdata_t playerdat;
-	for (int z = 0; z < 5; ++z)
+	for (int i = 0; i < 10; ++i)
 	{
-		for (int i = 0; i < 10; ++i)
+		for (int k = 0; k < 10; ++k)
 		{
-			for (int k = 0; k < 10; ++k)
-			{
-				playerdat.gameboard[i][k] = empty;
-			}
+			playerdat.gameboard[i][k] = empty;
 		}
-		
-		set_board_automatically(playerdat.gameboard);
-
+	}
+	set_board_automatically(playerdat.gameboard);
+	
+	while (playerdat.surviving_ships > 0)
+	{
+		Sleep(100);
+		CLEAR_SCREEN;
+		ai_take_turn(NULL, &playerdat);
+		printf("%s\n", get_debug_output());
 		print_board(playerdat.gameboard, true);
 	}
-	PAUSE;
 
 #else
 	bool playing = true;
-	const char * message;
+	const char * message = "";
+	battleship_log(NORMAL_PRINT, "=========================================================\n\
+== BATTLESHIP                                          ==\n\
+=========================================================");
 	do
 	{
+		battleship_log(NORMAL_PRINT, "\n======== NEW GAME ============================");
 		/////////////////////////////
 		/// Initialize Game
 		/////////////////////////////
@@ -84,9 +100,15 @@ int main (void)
 
 			/// Set context for game commands
 			if (current == human)
+			{
 				opposition = ai;
+				battleship_log(NORMAL_PRINT, "PLAYER 1's TURN ===============");
+			}
 			else
+			{
 				opposition = human;
+				battleship_log(NORMAL_PRINT, "PLAYER 2's TURN ===============");
+			}
 
 			// Print boards and get input if it's human's turn
 			if (current == human) 
@@ -118,8 +140,8 @@ int main (void)
 				}
 				
 				CLEAR_SCREEN;
-				puts("");
 				SHOW_BOARDS;
+				puts("");
 				PAUSE;
 				#undef SHOW_BOARDS
 			}
@@ -160,9 +182,11 @@ int main (void)
 		{
 		case human:
 			message = "You lost!";
+			battleship_log(NORMAL_PRINT, "PLAYER 2 WINS!");
 			break;
 		case ai:
 			message = "You won!";
+			battleship_log(NORMAL_PRINT, "PLAYER 1 WINS!");
 			break;
 		}
 		CLEAR_SCREEN;
